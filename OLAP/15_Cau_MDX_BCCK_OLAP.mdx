@@ -1,0 +1,102 @@
+﻿/*1. Thống kê các số lượng và tổng giá trị đã bán được của các loại 
+sản phẩm theo từng tháng để điều chỉnh số lượng hàng nhập về */
+ SELECT NON EMPTY { [Measures].[Total Line Items Price], [Measures].[Fact ECS Count] } ON COLUMNS, 
+ NON EMPTY { ([Dim Products].[Product Type].[Product Type].ALLMEMBERS * [Dim Times].[Order Month].[Order Month].ALLMEMBERS ) } DIMENSION PROPERTIES MEMBER_CAPTION, 
+ MEMBER_UNIQUE_NAME ON ROWS 
+ FROM [Ecommerce CS]
+
+/*2. Thống kê giá gốc, chi phí vận chuyển, khuyến mãi và tổng giá theo từng tháng 
+để tính toán lời/lỗ và đưa ra các kế hoạch mới sau mỗi tháng*/
+ SELECT NON EMPTY { [Measures].[Total Line Items Price], [Measures].[Shipping Rate], [Measures].[Total Discounts], [Measures].[Total Price] } ON COLUMNS, 
+ NON EMPTY { ([Dim Times].[Order Month].[Order Month].ALLMEMBERS ) } DIMENSION PROPERTIES MEMBER_CAPTION, 
+ MEMBER_UNIQUE_NAME ON ROWS FROM [Ecommerce CS] 
+
+ /*3. Thống kê tình trạng các đơn hàng của mỗi tháng để nắm bắt được thông tin về các đơn hàng*/
+  SELECT NON EMPTY { [Measures].[Fact ECS Count] } ON COLUMNS, 
+  NON EMPTY { ([Dim Status].[Financial Status].[Financial Status].ALLMEMBERS * [Dim Times].[Order Month].[Order Month].ALLMEMBERS ) } DIMENSION PROPERTIES MEMBER_CAPTION,
+  MEMBER_UNIQUE_NAME ON ROWS FROM [Ecommerce CS]
+
+  /*4.Thống kê số giao dịch thành công và không thành công trong mỗi tháng*/
+SELECT NON EMPTY { [Measures].[Fact ECS Count] } ON COLUMNS, 
+NON EMPTY { ([Dim Times].[Order Month].[Order Month].ALLMEMBERS * [Dim Transactions].[Status].[Status].ALLMEMBERS ) } DIMENSION PROPERTIES MEMBER_CAPTION, 
+MEMBER_UNIQUE_NAME ON ROWS FROM [Ecommerce CS] 
+
+/*5. Thống kê 5 loại sản phẩm được mua nhiều nhất */
+SELECT [Measures].[Fact ECS Count] on columns,
+NONEMPTY (TOPCOUNT(
+        [Dim Products].[Product Type].[Product Type].members
+        ,5
+        ,[Measures].[Fact ECS Count])) on rows
+FROM [Ecommerce CS] 
+where [Dim Times].[Order Month].&[10]
+
+/*6. Thống kê 10 khách hàng có nhiều lượt mua hàng nhất*/
+SELECT {[Measures].[Price],[Measures].[Fact ECS Count]} on columns,
+NONEMPTY (TOPCOUNT(
+        [Dim Customers].[Full Name].[Full Name].MEMBERS
+        ,10
+        ,[Measures].[Fact ECS Count])) on rows
+FROM [Ecommerce CS]
+
+/*7. Thống kê 5 ngày bán được nhiều hàng nhất*/
+SELECT {[Measures].[Fact ECS Count]} on columns,
+NONEMPTY (TOPCOUNT(
+        [Dim Times].[Order Day].[Order Day].MEMBERS
+        ,5
+        ,[Measures].[Fact ECS Count])) on rows
+FROM [Ecommerce CS]
+
+/*8. Thống kê số đơn hàng đã được đóng gói đầy đủ và số đơn chưa được đóng gói để thuê thêm nhân viên nếu cần*/
+ SELECT NON EMPTY { [Measures].[Fact ECS Count] } ON COLUMNS, 
+ NON EMPTY { ([Dim Status].[Fulfillment Status].[Fulfillment Status].ALLMEMBERS ) } DIMENSION PROPERTIES MEMBER_CAPTION, 
+ MEMBER_UNIQUE_NAME ON ROWS FROM [Ecommerce CS]
+
+ /*9. In ra top 5 loại sản phẩm có lượt trả hàng nhiều nhất để kiểm tra lại chất lượng sản phẩm*/
+SELECT {[Measures].[Fact ECS Count]} on columns,
+NONEMPTY (TOPCOUNT(
+        [Dim Products].[Product Type].[Product Type].MEMBERS 
+        ,5
+        ,[Measures].[Fact ECS Count])) on rows
+FROM [Ecommerce CS]
+where [Dim Status].[Financial Status].&[refunded]
+
+/*10. In ra giá của từng loại sản phẩm dao động theo từng ngày*/
+  SELECT NON EMPTY { [Measures].[Price] } ON COLUMNS, 
+  NON EMPTY  ([Dim Products].[Product Type].[Product Type].MEMBERS* [Dim Times].[Order Day].[Order Day].MEMBERS  ) 
+  ON ROWS FROM [Ecommerce CS]
+
+  /*11. In ra tổng doanh thu theo từng loại sản phẩm theo từng tháng*/
+  select {[Dim Products].[Product Type].children*[Measures].[Total Line Items Price]} on columns,
+non empty {
+    DRILLDOWNLEVEL(
+        DRILLDOWNLEVEL([Dim Times].[Order Month]))
+} on rows
+from [Ecommerce CS]
+
+/*12. In ra tình trạng của các đơn hàng theo từng tháng*/
+  select {[Dim Transactions].[Status].children*[Measures].[Fact ECS Count]} on columns,
+non empty {
+    DRILLDOWNLEVEL(
+        DRILLDOWNLEVEL([Dim Times].[Order Month]))
+} on rows
+from [Ecommerce CS]
+
+/*13. In ra tình trạng thanh toán của các hóa đơn theo tháng*/
+ SELECT NON EMPTY { [Measures].[Fact ECS Count] } ON COLUMNS, 
+ NON EMPTY ([Dim Status].[Financial Status].[Financial Status].ALLMEMBERS * [Dim Times].[Order Month].[Order Month].ALLMEMBERS ) 
+ ON ROWS FROM [Ecommerce CS]
+
+/*14. In ra sản phẩm bán chạy nhất trong năm 2016*/
+SELECT [Measures].[Fact ECS Count] on columns,
+NONEMPTY (TOPCOUNT(
+        [Dim Products].[Product Type].[Product Type].members
+        ,5
+        ,[Measures].[Fact ECS Count])) on rows
+FROM [Ecommerce CS]
+where [Dim Times].[Order Year].&[2016]
+
+/*15. Liệt kê số loại kind trong bảng transactions */
+ SELECT NON EMPTY { [Measures].[Fact ECS Count] } ON COLUMNS, 
+ NON EMPTY  ([Dim Transactions].[Kind].[Kind].ALLMEMBERS ) 
+ ON ROWS FROM [Ecommerce CS]
+
